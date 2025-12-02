@@ -1,0 +1,90 @@
+@import "tailwindcss" important;
+
+/* Define your custom theme variables linking to CSS variables */
+@theme {
+  --font-sans: var(--font-roboto), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+/* Custom variant for dark mode based on parent class */
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  :root {
+    --background: rgba(255, 255, 255, 1);
+    --foreground: rgba(3, 3, 3, 1);
+
+    --primary: rgba(59, 130, 246, 1);
+    --primary-foreground: rgba(255, 255, 255, 1);
+
+    --secondary: rgba(234, 234, 238, 1);
+    --secondary-foreground: rgba(0, 0, 0, 1);
+
+    --muted: rgba(243, 244, 246, 1);
+    --muted-foreground: rgba(199, 196, 196, 1);
+
+    --accent: rgba(243, 244, 246, 1);
+    --accent-foreground: rgba(0, 0, 0, 1);
+
+    --destructive: rgba(255, 0, 0, 1);
+    --destructive-foreground: rgba(255, 255, 255, 1);
+
+    --border: rgba(227, 227, 227, 1);
+    --input: rgba(227, 227, 227, 1);
+    --ring: rgba(59, 130, 246, 0.2);
+
+    /* Radius variables are often needed for Shadcn UI */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: rgba(31, 41, 55, 1); /* Hardcoded gray-800 for safety */
+    --foreground: rgba(255, 255, 255, 1);
+
+    --primary: rgba(144, 202, 249, 1);
+    --primary-foreground: rgba(50, 50, 50, 1);
+
+    --secondary: rgba(34, 34, 34, 1);
+    --secondary-foreground: rgba(255, 255, 255, 1);
+
+    --muted: rgba(34, 34, 34, 1);
+    --muted-foreground: rgba(102, 102, 102, 1);
+
+    --accent: rgba(34, 34, 34, 1);
+    --accent-foreground: rgba(255, 255, 255, 1);
+
+    --destructive: rgba(255, 99, 71, 1);
+    --destructive-foreground: rgba(255, 255, 255, 1);
+
+    --border: rgba(255, 255, 255, 0.2);
+    --input: rgba(255, 255, 255, 0.2);
+    --ring: rgba(59, 130, 246, 0.4);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+}

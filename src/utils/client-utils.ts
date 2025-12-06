@@ -6,6 +6,10 @@ import { twMerge } from "tailwind-merge";
 // Import Lucide icons
 import { CheckCircle2, CircleX, Info, TriangleAlert } from "lucide-react";
 
+// Reusable base styles for consistency
+const toastBaseStyle = "items-start gap-3 rounded-2xl w-[300px] font-bold text-[16px]";
+const toastDescStyle = "text-[13px] font-[500]";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -13,40 +17,40 @@ export function cn(...inputs: ClassValue[]) {
 export const showErrorMsg = (msg: any) => {
   toast.error("Error", {
     description: msg,
-    className: "bg-[#E53935] text-white items-start gap-3 rounded-2xl w-[300px] font-bold text-[16px]",
-    descriptionClassName: "text-[13px] font-[400]",
-    // Replaced GiCancel with CircleX
-    icon: React.createElement(CircleX, { size: 24, className: "text-white mt-3" }),
+    // Uses 'destructive' from theme
+    className: cn("bg-destructive text-destructive-foreground", toastBaseStyle),
+    descriptionClassName: toastDescStyle,
+    icon: React.createElement(CircleX, { size: 24, className: "text-destructive-foreground mt-3" }),
   });
 };
 
 export const showSuccessMsg = (msg: any) => {
   toast.success("Success", {
     description: msg,
-    className: "bg-[#5AB752] text-white items-start gap-3 rounded-2xl w-[300px] font-bold text-[16px]",
-    descriptionClassName: "text-[11px] font-[300]",
-    // Replaced PiSealCheck with CheckCircle2
-    icon: React.createElement(CheckCircle2, { size: 24, className: "text-white mt-3" }),
+    // Uses 'success' from theme (#5AB752)
+    className: cn("bg-success text-success-foreground", toastBaseStyle),
+    descriptionClassName: toastDescStyle,
+    icon: React.createElement(CheckCircle2, { size: 24, className: "text-success-foreground mt-3" }),
   });
 };
 
 export const showInfoMsg = (msg: any) => {
   toast.info("Info", {
     description: msg,
-    className: "bg-primary-900 text-white items-start gap-3 rounded-2xl w-[300px] font-bold text-[16px]",
-    descriptionClassName: "text-[11px] font-[300]",
-    // Replaced MdInfo with Info
-    icon: React.createElement(Info, { size: 24, className: "text-white mt-3" }),
+    // Uses 'info' from theme (Blue)
+    className: cn("bg-info text-info-foreground", toastBaseStyle),
+    descriptionClassName: toastDescStyle,
+    icon: React.createElement(Info, { size: 24, className: "text-info-foreground mt-3" }),
   });
 };
 
 export const showWarningMsg = (msg: any) => {
   toast.warning("Warning", {
     description: msg,
-    className: "bg-yellow-500 text-white items-start gap-3 rounded-2xl w-[300px] font-bold text-[16px]",
-    descriptionClassName: "text-[11px] font-[300]",
-    // Replaced MdWarningAmber with TriangleAlert
-    icon: React.createElement(TriangleAlert, { size: 24, className: "text-white mt-3" }),
+    // Uses 'warning' from theme (Amber/Yellow)
+    className: cn("bg-warning text-warning-foreground", toastBaseStyle),
+    descriptionClassName: "text-[11px] font-[300]", // Kept your specific font weight for warning
+    icon: React.createElement(TriangleAlert, { size: 24, className: "text-warning-foreground mt-3" }),
   });
 };
 

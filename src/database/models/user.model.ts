@@ -1,26 +1,46 @@
-import { IUser } from "@/types/auth"; // Import your shared, pure interface
+import { IUserDocument } from "@/types/user.types";
 import bcrypt from "bcryptjs";
-import mongoose, { Document, Model, Schema } from "mongoose";
-
-// 1. Define the Mongoose-Specific Interface
-// We extend the shared 'IUser' but remove '_id' to let Mongoose manage it.
-// We also add 'Document' to get methods like .save(), .remove()
-export interface IUserDocument extends Omit<IUser, "_id">, Document {
-  // We explicitly define the methods we are adding
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
+import mongoose, { Model, Schema } from "mongoose";
 
 const UserSchema = new Schema<IUserDocument>(
   {
-    google_id: { type: String, unique: true, sparse: true },
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    user_photo: { type: String },
-    // 'select: false' ensures we don't accidentally send the hash to the frontend
-    password_hash: { type: String, select: false },
+    name: {
+      type: String,
+      required: [true, "Name is required"],
+      trim: true,
+      minlength: 2,
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
+    },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    password_hash: {
+      type: String,
+      select: false, // SECURITY: Never return password unless explicitly asked
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    lastActive: {
+      type: Date,
+      default: Date.now,
+    },
+    status: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
-    timestamps: true,
+    timestamps: true, // Automatically manages createdAt and updatedAt
   }
 );
 
@@ -45,8 +65,12 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
   return bcrypt.compare(candidatePassword, this.password_hash);
 };
 
-// Prevent model overwrite error during hot reloading
-// We cast the cached model to Model<IUserDocument> to ensure TypeScript checks work
-const UserModel = (mongoose.models.User as Model<IUserDocument>) || mongoose.model<IUserDocument>("User", UserSchema);
+// ---------------------------------------------------------
+// Next.js Hot Reload Fix
+// ---------------------------------------------------------
+// In Next.js, the backend code recompiles frequently in development.
+// This prevents "OverwriteModelError" by checking if the model exists first.
+
+const UserModel: Model<IUserDocument> = mongoose.models.User || mongoose.model<IUserDocument>("User", UserSchema);
 
 export default UserModel;

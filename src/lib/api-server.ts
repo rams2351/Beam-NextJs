@@ -1,7 +1,7 @@
 import UserModel from "@/database/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken, getRefreshToken, setTokens } from "./cookies";
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "./jwt";
+import { JWTPayload, signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "./jwt";
 import connectMongoDb from "./mongoose";
 
 interface ApiResponseStructure<T> {
@@ -46,7 +46,7 @@ export function apiRequestHandler(handler: AuthenticatedHandler, authenticateRou
         }
 
         // Try to verify existing access token
-        let payload = accessToken ? verifyAccessToken(accessToken) : null;
+        let payload: JWTPayload | null = accessToken ? verifyAccessToken(accessToken) : null;
 
         // If Access Token is invalid/expired, try Refresh Flow
         if (!payload) {
@@ -84,7 +84,7 @@ export function apiRequestHandler(handler: AuthenticatedHandler, authenticateRou
           });
 
           // E. Set payload for the current request context
-          payload = tokenPayload;
+          payload = { _id: tokenPayload?._id.toString(), name: tokenPayload.name, email: tokenPayload.email };
         }
 
         // ======================================================

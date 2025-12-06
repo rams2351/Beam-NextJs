@@ -5,7 +5,7 @@ const authRoutes = ["/login", "/register", "/forgot-password"];
 
 // 2. Define Protected Prefixes (Routes that REQUIRE login)
 // Any route starting with these will be blocked for guests
-const protectedPrefixes = ["/dashboard", "/profile"];
+const protectedPrefixes = ["/dashboard", "/profile", "/chat"];
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;

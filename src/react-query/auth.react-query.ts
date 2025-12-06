@@ -1,5 +1,5 @@
 import { callApi } from "@/lib/api-client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 // Types for better safety (Optional but recommended)
 interface LoginBody {
@@ -91,4 +91,18 @@ export function useResetPasswordMutation() {
       });
     },
   });
+}
+
+export function useGetTokenQuery() {
+  return useQuery({
+    queryKey: ["get-token"],
+    queryFn: async () => {
+      return await callApi("/api/auth/token", {
+        method: "GET",
+      });
+    },
+    select: (data: any) => {
+      return data.token;
+    },
+  }) as any;
 }

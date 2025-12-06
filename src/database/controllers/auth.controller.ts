@@ -1,6 +1,6 @@
 import UserModel from "@/database/models/user.model";
 import { ResponseHandler } from "@/lib/api-server";
-import { clearTokens, getResetPasswordTokenFromCookies, setResetPasswordTokenInCookies, setTokens } from "@/lib/cookies";
+import { clearTokens, getAccessToken, getResetPasswordTokenFromCookies, setResetPasswordTokenInCookies, setTokens } from "@/lib/cookies";
 import { signAccessToken, signRefreshToken, signResetPasswordToken, verifyResetPasswordToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
@@ -33,7 +33,7 @@ export async function loginUserController(req: NextRequest) {
   }
 
   const userObj = user.toObject();
-  delete userObj.password_hash;
+  delete (userObj as any).password_hash;
 
   const accessToken = signAccessToken(userObj);
   const refreshToken = signRefreshToken(userObj);
@@ -77,7 +77,7 @@ export async function userRegisterWithCredentialsController(req: NextRequest) {
   });
 
   const userObj = newUser.toObject();
-  delete userObj.password_hash;
+  delete (userObj as any).password_hash;
 
   const accessToken = signAccessToken(userObj);
   const refreshToken = signRefreshToken(userObj);
@@ -155,4 +155,10 @@ export async function resetUserPasswordController(req: NextRequest) {
   cookieStore.delete("resetToken");
 
   return ResponseHandler.success(null, "Password Reset Successfully!");
+}
+
+export async function getTokenController(req: NextRequest) {
+  const token = await getAccessToken();
+
+  return ResponseHandler.success({ token }, "Token fetched");
 }

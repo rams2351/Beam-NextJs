@@ -1,4 +1,5 @@
-import { IUser } from "@/types/auth";
+import { getAccessToken, getRefreshToken } from "@/lib/cookies";
+import { IUser, IUserDocument } from "@/types/user.types";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { Document } from "mongoose";
 
@@ -11,6 +12,36 @@ if (!ACCESS_SECRET || !REFRESH_SECRET) {
   throw new Error("Missing Token Secrets in .env file");
 }
 
+export interface JWTPayload {
+  _id: string;
+  name: string;
+  email: string;
+  // If you want to add 'role' or 'avatar' later, ADD IT HERE ONLY.
+}
+
+const normalizePayload = (data: IUserDocument | JWTPayload): JWTPayload => {
+  // Check if it's already a clean payload (doesn't have mongoose methods like save)
+  const isMongooseDocument = (d: any): d is IUserDocument => {
+    return d && typeof d.toObject === "function";
+  };
+
+  if (isMongooseDocument(data)) {
+    // Extract strictly what we need from the full DB document
+    return {
+      _id: data._id.toString(), // Ensure ID is string
+      name: data.name,
+      email: data.email,
+    };
+  }
+
+  // It's already a plain object/payload
+  return {
+    _id: data._id.toString(),
+    name: data.name,
+    email: data.email,
+  };
+};
+
 // Helper to handle "15m" (string) or 900 (number)
 const getExpiry = (envVal: string | undefined, defaultVal: string | number) => {
   if (!envVal) return defaultVal;
@@ -18,31 +49,35 @@ const getExpiry = (envVal: string | undefined, defaultVal: string | number) => {
   return isNaN(Number(envVal)) ? (envVal as any) : Number(envVal);
 };
 
-export function signAccessToken(user: MongoUser) {
+export function signAccessToken(data: IUserDocument | JWTPayload) {
+  const payload = normalizePayload(data); // <--- AUTOMATIC CLEANUP
+
   const options: SignOptions = {
-    expiresIn: getExpiry(process.env.ACCESS_TOKEN_EXPIRY, "15m"),
+    expiresIn: "15m",
   };
-  return jwt.sign(user, ACCESS_SECRET, options);
+  return jwt.sign(payload, ACCESS_SECRET, options);
 }
 
-export function signRefreshToken(user: MongoUser) {
+export function signRefreshToken(data: IUserDocument | JWTPayload) {
+  const payload = normalizePayload(data); // <--- AUTOMATIC CLEANUP
+
   const options: SignOptions = {
-    expiresIn: getExpiry(process.env.REFRESH_TOKEN_EXPIRY, "7d"),
+    expiresIn: "7d",
   };
-  return jwt.sign(user, REFRESH_SECRET, options);
+  return jwt.sign(payload, REFRESH_SECRET, options);
 }
 
-export function verifyAccessToken(token: string) {
+export function verifyAccessToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, ACCESS_SECRET) as MongoUser;
+    return jwt.verify(token, ACCESS_SECRET) as JWTPayload;
   } catch (error) {
-    return null; // Returns null if expired or invalid
+    return null;
   }
 }
 
-export function verifyRefreshToken(token: string) {
+export function verifyRefreshToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, REFRESH_SECRET) as MongoUser;
+    return jwt.verify(token, REFRESH_SECRET) as JWTPayload;
   } catch (error) {
     return null;
   }
@@ -65,4 +100,38 @@ export function verifyResetPasswordToken(token: string) {
   } catch {
     return null;
   }
+}
+
+export async function getValidAccessToken(): Promise<string | null> {
+  // 1. Try existing Access Token
+  const accessToken = await getAccessToken();
+
+  if (accessToken) {
+    const payload = verifyAccessToken(accessToken);
+    if (payload) {
+      return accessToken; // It's valid, use it.
+    }
+  }
+
+  // 2. Access Token is expired or missing. Try Refresh Token.
+  console.log("⚠️ Access Token expired in Layout. Attempting silent refresh for Socket...");
+
+  const refreshToken = await getRefreshToken();
+  if (!refreshToken) return null; // User is logged out
+
+  const refreshPayload = verifyRefreshToken(refreshToken);
+  if (!refreshPayload) return null; // Refresh token is also invalid
+
+  // 3. Generate a NEW Access Token String
+  // We cannot "Set-Cookie" in a Server Component layout easily,
+  // but we CAN return a valid string for the Socket to use immediately.
+  const newPayload = {
+    _id: refreshPayload._id,
+    name: refreshPayload.name,
+    email: refreshPayload.email,
+  };
+
+  const newAccessToken = signAccessToken(newPayload);
+
+  return newAccessToken;
 }

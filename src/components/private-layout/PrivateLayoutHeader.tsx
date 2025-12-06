@@ -1,12 +1,14 @@
 "use client";
 
+import Dialog from "@/components/common/Dialog";
 import { useLogoutMutation } from "@/react-query/auth.react-query";
 import { cn } from "@/utils/client-utils";
-import { Bus, LayoutDashboard, LogOut, Moon, Sun, User } from "lucide-react";
+import { LayoutDashboard, LogOut, MessageCircleIcon, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button from "../common/Button";
 import Switch from "../common/Switch";
 
@@ -15,12 +17,18 @@ const PrivateLayoutHeader: React.FC = () => {
   const { mutate: logout, isPending } = useLogoutMutation();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   const routes = [
     {
       href: "/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      href: "/chat",
+      label: "Chat",
+      icon: MessageCircleIcon,
     },
     {
       href: "/profile",
@@ -35,6 +43,13 @@ const PrivateLayoutHeader: React.FC = () => {
     setTheme(isChecked ? "dark" : "light");
   };
 
+  const handleCloseLogoutDialog = useCallback(() => {
+    setIsLogoutDialogOpen(false);
+  }, []);
+
+  const handleOpenLogoutModal = useCallback(() => {
+    setIsLogoutDialogOpen(true);
+  }, []);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -43,8 +58,8 @@ const PrivateLayoutHeader: React.FC = () => {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur flex justify-between items-center px-4 h-14">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 bg-muted rounded-full" />
-          <span className="text-lg font-bold text-muted-foreground">My App</span>
+          <div className="xbg-muted rounded-full" />
+          <Image src={"/images/beam-white-text.svg"} alt="Beam-logo" className="object-contain h-8 w-auto" priority width={100} height={0} />
         </div>
         <div className="w-[50px] h-6" />
       </div>
@@ -57,8 +72,14 @@ const PrivateLayoutHeader: React.FC = () => {
         {/* Left Side: Logo & Nav */}
         <div className="flex items-center gap-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-bold text-foreground">
-            <Bus className="h-6 w-6 text-primary" />
-            <span className="hidden sm:inline-block">My App</span>
+            <Image
+              src={isDarkTheme ? "/images/beam-white-text.svg" : "/images/beam.svg"}
+              alt="Beam-logo"
+              className="object-contain h-8 w-auto"
+              priority
+              width={100}
+              height={0}
+            />
           </Link>
 
           <nav className="flex items-center gap-1 sm:gap-4 text-sm font-medium">
@@ -89,7 +110,7 @@ const PrivateLayoutHeader: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => logout()}
+            onClick={handleOpenLogoutModal}
             disabled={isPending}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             isLoading={isPending}
@@ -99,6 +120,21 @@ const PrivateLayoutHeader: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <Dialog
+        title="Create New Chat"
+        open={isLogoutDialogOpen}
+        onOpenChange={handleCloseLogoutDialog}
+        closeLabel="Cancel"
+        actionLabel="Logout"
+        isDestructive
+        onAction={logout}
+        isLoading={isPending}
+      >
+        <div className="">
+          <p className="">Are you sure want to logout from the Beam Chat App.</p>
+        </div>
+      </Dialog>
     </header>
   );
 };

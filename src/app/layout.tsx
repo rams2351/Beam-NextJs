@@ -1,14 +1,7 @@
-"use client";
 import "@/app/styles/main.css";
-import Metadata from "@/components/common/Metadata";
-import { Toaster } from "@/components/shadcn/sonner";
-import { getQueryClient } from "@/lib/react-query";
-import Loading from "@/services/LoadingService";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import RootLayout from "@/components/root-layout/RootLayout";
+import { Metadata } from "next";
 import localFont from "next/font/local";
-import { useEffect } from "react";
 
 const roboto = localFont({
   src: [
@@ -83,30 +76,26 @@ const roboto = localFont({
   display: "swap",
 });
 
-export default function RootLayout({
+// 1. Define the Base Metadata here
+export const metadata: Metadata = {
+  title: {
+    // %s will be replaced by the title exported in child pages
+    template: "%s | Beam",
+    default: "Beam | Real-time Chat", // Fallback if a page doesn't have a title
+  },
+  description: "Connect instantly with the world on Beam.",
+  applicationName: "Beam",
+};
+
+export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  useEffect(() => {
-    Loading.hideLoading();
-  }, []);
-  const queryClient = getQueryClient();
-
   return (
     <html className={`${roboto.variable}`} lang="en" suppressHydrationWarning>
       <body className={` antialiased`}>
-        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="loading-container">
-            <div className="loader"></div>
-          </div>
-          <Toaster richColors />
-          <Metadata seoTitle={process.env.NEXT_PUBLIC_APP_NAME || "APP title"} seoDescription="App description" />
-          <QueryClientProvider client={queryClient}>
-            <main className="flex flex-column min-h-screen max-w-screen bg-gray-100 dark:bg-gray-900">{children}</main>
-            <ReactQueryDevtools initialIsOpen={false} />
-          </QueryClientProvider>
-        </NextThemesProvider>
+        <RootLayout>{children}</RootLayout>
       </body>
     </html>
   );

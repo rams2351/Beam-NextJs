@@ -97,46 +97,65 @@ export default function ExtractorPage() {
   // ==============================
   // STEP 3: CHECK LINKS
   // ==============================
+  // ==============================
+  // STEP 3: CHECK LINKS (BATCHED FOR SPEED)
+  // ==============================
   const handleStartCheck = async () => {
     if (tableRows.length === 0) return;
 
     setIsChecking(true);
     stopSignalRef.current = false;
 
-    for (let i = 0; i < tableRows.length; i++) {
-      if (stopSignalRef.current) break;
-      if (tableRows[i].status !== "idle") continue;
+    // CONCURRENCY LIMIT: How many links to check at once?
+    // 5-10 is safe. Too high might get your IP blocked by the target site.
+    const BATCH_SIZE = 5;
 
-      // A. Set Loading
-      setTableRows((prev) => prev.map((row) => (row.id === i ? { ...row, status: "loading" } : row)));
+    // Helper to process a single row
+    const processRow = async (row: LinkRow) => {
+      // 1. Set Loading
+      setTableRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: "loading" } : r)));
 
       try {
         const res = await fetch("/api/check", {
           method: "POST",
-          body: JSON.stringify({ url: tableRows[i].originalUrl }),
+          body: JSON.stringify({ url: row.originalUrl }),
         });
         const result = await res.json();
 
-        // C. Update Result
+        // 2. Update Result
         setTableRows((prev) =>
-          prev.map((row) =>
-            row.id === i
+          prev.map((r) =>
+            r.id === row.id
               ? {
-                  ...row,
+                  ...r,
                   status: result.isBroken ? "error" : "success",
                   finalUrl: result.finalUrl,
                   statusCode: result.status,
                   reason: result.reason,
                   isBroken: result.isBroken,
                 }
-              : row
+              : r
           )
         );
       } catch (error) {
-        setTableRows((prev) => prev.map((row) => (row.id === i ? { ...row, status: "error", reason: "Network Err", isBroken: true } : row)));
+        setTableRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: "error", reason: "Network Err", isBroken: true } : r)));
       }
+    };
 
-      await new Promise((r) => setTimeout(r, 20));
+    // BATCH LOOP
+    for (let i = 0; i < tableRows.length; i += BATCH_SIZE) {
+      if (stopSignalRef.current) break;
+
+      // Get the next batch of rows (only "idle" ones)
+      const batch = tableRows.slice(i, i + BATCH_SIZE).filter((r) => r.status === "idle");
+
+      if (batch.length === 0) continue;
+
+      // Run them all in parallel
+      await Promise.all(batch.map((row) => processRow(row)));
+
+      // Tiny delay to breathe
+      await new Promise((r) => setTimeout(r, 50));
     }
     setIsChecking(false);
   };

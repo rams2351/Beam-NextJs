@@ -63,7 +63,7 @@ export default function ExtractorPage() {
       if (data.success) {
         setExtractedLinks(data.links);
         setRangeStart(1);
-        setRangeEnd(Math.min(data.links.length, 50));
+        setRangeEnd(data.total);
         setTotalLinks(data.total);
       } else {
         alert("Error: " + data.error);
@@ -276,7 +276,7 @@ export default function ExtractorPage() {
 
                       {/* Original URL */}
                       <TableCell className="font-mono text-xs text-slate-600">
-                        <div className="truncate max-w-[300px]" title={row.originalUrl}>
+                        <div className=" max-w-[300px" title={row.originalUrl}>
                           {row.originalUrl}
                         </div>
                       </TableCell>
